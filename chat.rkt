@@ -17,10 +17,8 @@
 (define (create-uri)
   (string-append "/v1/chat/completions"))
 
-;; API Key
-(define (load-authorization api-key)
-  (string-append "Bearer " api-key))
-
+;; define the query POST data as a hash
+;; which can be coinverted to JSON
 (define (query-hash query-content)
   (hash
    'model "gpt-3.5-turbo"
@@ -37,10 +35,13 @@
                  #:ssl? #t
                  #:method #"POST"
                  #:headers (list
-                            (string-append "Authorization: " (load-authorization api-key))
+                            (string-append "Authorization: " (string-append "Bearer " api-key))
                             "Content-Type: application/json")
                  #:data (jsexpr->string (query-hash content)))])
     (let-values ([(status reason) (parse-status-line status-line)])
       (unless (= 200 status)
         (error (format "invalid HTTP status ~s; ~s" status reason))))
     (read-json data-port)))
+
+(define (get-content qr)
+  (hash-ref (hash-ref (first (hash-ref qr 'choices)) 'message) 'content))
